@@ -1,0 +1,11 @@
+# 忽略相关文件夹
+/.vscode
+/hex
+/pca10040
+/pca10040e
+/pca10056
+/pca10056e
+/pca10100
+/pca10100e
+*.eww
+
