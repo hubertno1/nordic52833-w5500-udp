@@ -135,58 +135,19 @@ void Process_Socket_Data(SOCKET s)
 	Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);
 }
 
-
-/**
- * @brief Work-around for transmitting 1 byte with SPIM.
- *
- * @param spim: The SPIM instance that is in use.
- * @param ppi_channel: An unused PPI channel that will be used by the workaround.
- * @param gpiote_channel: An unused GPIOTE channel that will be used by the workaround.
- * 
- * @warning Must not be used when transmitting multiple bytes.
- * @warning After this workaround is used, the user must reset the PPI channel and the
- GPIOTE channel before attempting to transmit multiple bytes.
- */
-void setup_workaround_for_ftpan_58(NRF_SPIM_Type * spim, uint32_t ppi_channel, uint32_t gpiote_channel)
-{
-	 // Create an event when SCK toggles.
-	 NRF_GPIOTE->CONFIG[gpiote_channel] = (
-	 GPIOTE_CONFIG_MODE_Event <<
-	 GPIOTE_CONFIG_MODE_Pos
-	 ) | (
-	 spim->PSEL.SCK <<
-	 GPIOTE_CONFIG_PSEL_Pos
-	 ) | (
-	 GPIOTE_CONFIG_POLARITY_Toggle <<
-	 GPIOTE_CONFIG_POLARITY_Pos
-	 );
-	 // Stop the spim instance when SCK toggles.
-	 NRF_PPI->CH[ppi_channel].EEP = (uint32_t)&NRF_GPIOTE->EVENTS_IN[gpiote_channel];
-	 NRF_PPI->CH[ppi_channel].TEP = (uint32_t)&spim->TASKS_STOP;
-	 NRF_PPI->CHENSET = 1U << ppi_channel;
-	 // The spim instance cannot be stopped mid-byte, so it will finish
-	 // transmitting the first byte and then stop. Effectively ensuring
-	 // that only 1 byte is transmitted.
-}
-void spi_ppi_set(void)
-{
-	setup_workaround_for_ftpan_58(NRF_SPIM0, 6, 0);
-}
-
-
-
 int main(void)
 {
-	
-		bsp_board_init(BSP_INIT_LEDS);
-
+		/* 初始化日志模块 */
 		APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
 		NRF_LOG_DEFAULT_BACKENDS_INIT();	
 		
+		
 		spi_init();
+
+		/* */
 		Load_Net_Parameters();		//装载网络参数	
 		W5500_Hardware_Reset();		//硬件复位W5500
-		W5500_Initialization();		//W5500初始货配置
+		W5500_Initialization();		//W5500初始化配置
 	
 		while (1)
     	{	
@@ -201,7 +162,6 @@ int main(void)
 					Process_Socket_Data(0);//W5500接收并发送接收到的数据
 				}
 	
-		
     	}
 
 }

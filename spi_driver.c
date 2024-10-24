@@ -48,9 +48,15 @@ spi_err_code_t spi_cs_disable(void)
 
 static void spi_event_handler(nrf_drv_spi_evt_t const * p_event, void * p_context)
 {
-    spi_xfer_done = true;	
+    spi_xfer_done = true;
+    NRF_LOG_INFO("SPI transfer completed.\r\n");
 }
 
+/**
+ * @brief 配置和初始化 spi
+ * 
+ * @return spi_err_code_t 
+ */
 spi_err_code_t spi_init(void)
 {
     nrf_drv_spi_config_t spi_config = NRF_DRV_SPI_DEFAULT_CONFIG;
@@ -58,8 +64,8 @@ spi_err_code_t spi_init(void)
     spi_config.miso_pin = SPI_MISO_PIN;
     spi_config.mosi_pin = SPI_MOSI_PIN;
     spi_config.sck_pin  = SPI_SCK_PIN;
-    spi_config.mode = NRF_DRV_SPI_MODE_0;
-    spi_config.frequency = NRF_DRV_SPI_FREQ_1M;             /* 1M，后面可以测试 8M 的速率是否可行 */
+    spi_config.mode = NRF_DRV_SPI_MODE_0;                             /* 配置 spi 模式为 0 */
+    spi_config.frequency = NRF_DRV_SPI_FREQ_1M;                       /* 1M，后面可以测试 8M 的速率是否可行 */
 
     ret_code_t err_code = nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL);
     if (err_code != NRF_SUCCESS)
