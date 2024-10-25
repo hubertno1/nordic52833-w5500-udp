@@ -51,6 +51,7 @@ spi_err_code_t spi_write_short(uint16_t data);
 spi_err_code_t spi_write_bytes(const uint8_t *data, uint16_t length);
 
 spi_err_code_t spi_read_byte(uint8_t *rx_data);
+spi_err_code_t spi_read_short(uint16_t *rx_data);
 spi_err_code_t spi_read_bytes(uint8_t *data, uint16_t length);
 
 spi_err_code_t spi_read_write(uint8_t *tx_data, uint8_t *rx_data, uint16_t length);
