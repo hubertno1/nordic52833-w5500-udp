@@ -106,6 +106,8 @@ spi_err_code_t spi_read_byte(uint8_t *rx_data)
     return spi_transfer_base(&tx_dummy, rx_data, 1, true);
 }
 
+
+
 spi_err_code_t spi_read_bytes(uint8_t *data, uint16_t length)
 {
     SPI_CHECK_NULL(data);

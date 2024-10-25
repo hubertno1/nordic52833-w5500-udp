@@ -15,10 +15,10 @@
 int main(void)
 {
 		APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
-		NRF_LOG_DEFAULT_BACKENDS_INIT();	
-		
+		NRF_LOG_DEFAULT_BACKENDS_INIT();
+	
 		spi_init();
-
+	
 		Load_Net_Parameters();		//装载网络参数
 		W5500_Hardware_Reset();		//硬件复位W5500
 		W5500_Initialization();		//W5500初始化配置
