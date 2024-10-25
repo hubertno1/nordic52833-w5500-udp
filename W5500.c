@@ -234,22 +234,17 @@ unsigned char Read_W5500_SOCK_1Byte(SOCKET s, unsigned short reg)
 *******************************************************************************/
 unsigned short Read_W5500_SOCK_2Byte(SOCKET s, unsigned short reg)
 {
-	volatile unsigned short i;
-	unsigned char temp;
+	uint16_t value;
 
 	spi_cs_enable();  //置W5500的SCS为低电平
-			
+
 	spi_write_short(reg);//通过SPI1写16位寄存器地址
 	spi_write_byte(FDM2|RWB_READ|(s*0x20+0x08));//通过SPI1写控制字节,2个字节数据长度,读数据,选择端口s的寄存器
-
-	spi_read_byte(&temp);
-	i = temp * 256;
-    spi_read_byte(&temp);  // 读取低字节
-    i += temp;
-
-
+	spi_read_short(&value);
+	
 	spi_cs_disable();//置W5500的SCS为高电平
-	return i;//返回读取到的寄存器数据
+
+	return value;//返回读取到的寄存器数据
 }
 
 /*******************************************************************************
