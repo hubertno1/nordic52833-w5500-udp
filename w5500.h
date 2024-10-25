@@ -264,6 +264,14 @@ extern unsigned short Read_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr);//
 extern void Write_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr, unsigned short size); //指定Socket(0~7)发送数据处理
 extern void W5500_Interrupt_Process(void);//W5500中断处理程序框架
 
+void Load_Net_Parameters(void);
+void W5500_Initialization(void);
+void W5500_Socket_Set(void);
+void Process_Socket_Data(SOCKET s);
+
+
+
+
 #define SPI_NODIC_RESET_PIN 5
 
 
