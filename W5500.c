@@ -46,8 +46,8 @@ unsigned char S0_Data;		//¶Ë¿Ú0½ÓÊÕºÍ·¢ËÍÊı¾İµÄ×´Ì¬,1:¶Ë¿Ú½ÓÊÕµ½Êı¾İ,2:¶Ë¿Ú·¢ËÍÊ
 #define S_TRANSMITOK 0x02	//¶Ë¿Ú·¢ËÍÒ»¸öÊı¾İ°üÍê³É 
 
 /***************----- ¶Ë¿ÚÊı¾İ»º³åÇø -----***************/
-unsigned char Rx_Buffer[2048];	//¶Ë¿Ú½ÓÊÕÊı¾İ»º³åÇø 
-unsigned char Tx_Buffer[2048];	//¶Ë¿Ú·¢ËÍÊı¾İ»º³åÇø 
+unsigned char Rx_Buffer[4096];	//¶Ë¿Ú½ÓÊÕÊı¾İ»º³åÇø 
+unsigned char Tx_Buffer[4096];	//¶Ë¿Ú·¢ËÍÊı¾İ»º³åÇø 
 
 unsigned char W5500_Interrupt;	//W5500ÖĞ¶Ï±êÖ¾(0:ÎŞÖĞ¶Ï,1:ÓĞÖĞ¶Ï)
 
@@ -429,11 +429,22 @@ void W5500_Init(void)
 	Write_W5500_nByte(SIPR,IP_Addr,4);		
 	
 	//ÉèÖÃ·¢ËÍ»º³åÇøºÍ½ÓÊÕ»º³åÇøµÄ´óĞ¡£¬²Î¿¼W5500Êı¾İÊÖ²á
-	for(i=0;i<8;i++)
+	// for(i=0;i<8;i++)
+	// {
+	// 	Write_W5500_SOCK_1Byte(i,Sn_RXBUF_SIZE, 0x02);//Socket Rx memory size=2k
+	// 	Write_W5500_SOCK_1Byte(i,Sn_TXBUF_SIZE, 0x02);//Socket Tx mempry size=2k
+	// }
+
+	/* ³¢ÊÔ·ÖÅä¸ø socket0 ¸ü¶àµÄ»º³åÇø 16KB½ÓÊÕ + 16KB·¢ËÍ */
+	Write_W5500_SOCK_1Byte(0, Sn_RXBUF_SIZE, 0x10);	
+	Write_W5500_SOCK_1Byte(0, Sn_TXBUF_SIZE, 0x10);
+	for (i = 1; i < 8; i++)
 	{
-		Write_W5500_SOCK_1Byte(i,Sn_RXBUF_SIZE, 0x02);//Socket Rx memory size=2k
-		Write_W5500_SOCK_1Byte(i,Sn_TXBUF_SIZE, 0x02);//Socket Tx mempry size=2k
+		Write_W5500_SOCK_1Byte(i, Sn_RXBUF_SIZE, 0x00);
+		Write_W5500_SOCK_1Byte(i, Sn_TXBUF_SIZE, 0x00);
 	}
+
+
 
 	//ÉèÖÃÖØÊÔÊ±¼ä£¬Ä¬ÈÏÎª2000(200ms) 
 	//Ã¿Ò»µ¥Î»ÊıÖµÎª100Î¢Ãë,³õÊ¼»¯Ê±ÖµÉèÎª2000(0x07D0),µÈÓÚ200ºÁÃë
