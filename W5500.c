@@ -23,8 +23,6 @@ unsigned char Phy_Addr[6];	//物理地址(MAC)
 unsigned char IP_Addr[4];	//本机IP地址 
 
 unsigned char S0_Port[2];	//端口0的端口号(5000) 
-unsigned char S0_DIP[4];	//端口0目的IP地址 
-unsigned char S0_DPort[2];	//端口0目的端口号(6000) 
 
 unsigned char UDP_DIPR[4];	//UDP(广播)模式,目的主机IP地址
 unsigned char UDP_DPORT[2];	//UDP(广播)模式,目的主机端口号
@@ -468,7 +466,7 @@ void W5500_Init(void)
 * 返回值  : 成功返回TRUE(0xFF),失败返回FALSE(0x00)
 * 说明    : 无
 *******************************************************************************/
-	//unsigned short hcg = 0;
+
 unsigned char Detect_Gateway(void)
 {
 	unsigned char ip_adde[4];
@@ -476,11 +474,6 @@ unsigned char Detect_Gateway(void)
 	ip_adde[1]=IP_Addr[1]+1;
 	ip_adde[2]=IP_Addr[2]+1;
 	ip_adde[3]=IP_Addr[3]+1;
-
-// hcg =  Read_W5500_1Byte(GAR);
-//	hcg =  Read_W5500_1Byte(GAR);
-//	hcg =  Read_W5500_1Byte(GAR);
-//	hcg =  Read_W5500_1Byte(GAR);
 	
 	//检查网关及获取网关的物理地址
 	Write_W5500_SOCK_4Byte(0,Sn_DIPR,ip_adde);//向目的地址寄存器写入与本机IP不同的IP值

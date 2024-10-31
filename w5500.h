@@ -200,31 +200,9 @@
 #define TRUE	0xff
 #define FALSE	0x00
 
-#define S_RX_SIZE	2048	/*定义Socket接收缓冲区的大小，可以根据W5500_RMSR的设置修改 */
-#define S_TX_SIZE	2048  	/*定义Socket发送缓冲区的大小，可以根据W5500_TMSR的设置修改 */
+#define S_RX_SIZE	8192	/*定义Socket接收缓冲区的大小，可以根据W5500_RMSR的设置修改 */
+#define S_TX_SIZE	8192  	/*定义Socket发送缓冲区的大小，可以根据W5500_TMSR的设置修改 */
 
-/***************----- W5500 GPIO定义 -----***************/
-#define W5500_SCS		GPIO_Pin_4	//定义W5500的CS引脚	 
-#define W5500_SCS_PORT	GPIOA
-	
-#define W5500_RST		GPIO_Pin_5	//定义W5500的RST引脚
-#define W5500_RST_PORT	GPIOC
-
-#define W5500_INT		GPIO_Pin_4	//定义W5500的INT引脚
-#define W5500_INT_PORT	GPIOC
-
-/***************----- 网络参数变量定义 -----***************/
-extern unsigned char Gateway_IP[4];	//网关IP地址 
-extern unsigned char Sub_Mask[4];	//子网掩码 
-extern unsigned char Phy_Addr[6];	//物理地址(MAC) 
-extern unsigned char IP_Addr[4];	//本机IP地址 
-
-extern unsigned char S0_Port[2];	//端口0的端口号(5000) 
-extern unsigned char S0_DIP[4];		//端口0目的IP地址 
-extern unsigned char S0_DPort[2];	//端口0目的端口号(6000) 
-
-extern unsigned char UDP_DIPR[4];	//UDP(广播)模式,目的主机IP地址
-extern unsigned char UDP_DPORT[2];	//UDP(广播)模式,目的主机端口号
 
 /***************----- 端口的运行模式 -----***************/
 extern unsigned char S0_Mode;	//端口0的运行模式,0:TCP服务器模式,1:TCP客户端模式,2:UDP(广播)模式
@@ -245,15 +223,8 @@ extern unsigned char S0_Data;		//端口0接收和发送数据的状态,1:端口接收到数据,2:端
 /***************----- W5500复位引脚 -----***************/
 #define W5500_RST_PIN 5
 
-/***************----- 端口数据缓冲区 -----***************/
-extern unsigned char Rx_Buffer[4096];	//端口接收数据缓冲区 
-extern unsigned char Tx_Buffer[4096];	//端口发送数据缓冲区 
-
 typedef unsigned char SOCKET;			//自定义端口号数据类型
 
-
-extern void Delay(unsigned int d);//延时函数(ms)
-extern void SPI_Configuration(void);//W5500 SPI初始化配置(STM32 SPI1)
 extern void W5500_Hardware_Reset(void);//硬件复位W5500
 extern void W5500_Init(void);//初始化W5500寄存器函数
 extern unsigned char Detect_Gateway(void);//检查网关服务器

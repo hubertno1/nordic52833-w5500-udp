@@ -65,7 +65,7 @@ spi_err_code_t spi_init(void)
     spi_config.mosi_pin = SPI_MOSI_PIN;
     spi_config.sck_pin  = SPI_SCK_PIN;
     spi_config.mode = NRF_DRV_SPI_MODE_0;                             /* 配置 spi 模式为 0 */
-    spi_config.frequency = NRF_DRV_SPI_FREQ_8M;                       /* 1M，后面可以测试 8M 的速率是否可行 */
+    spi_config.frequency = NRF_DRV_SPI_FREQ_1M;                       /* 1M，后面可以测试 8M 的速率是否可行 */
 
     ret_code_t err_code = nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL);
     if (err_code != NRF_SUCCESS)

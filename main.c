@@ -25,20 +25,13 @@ void w5500_int_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
 int main(void)
 {
-	ret_code_t err_code;
-
 	APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
 	NRF_LOG_DEFAULT_BACKENDS_INIT();
 
-    if (!nrf_drv_gpiote_is_init())
-    {
-        err_code = nrf_drv_gpiote_init();
-        APP_ERROR_CHECK(err_code);
-    }
+	nrf_drv_gpiote_init();
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
     in_config.pull = NRF_GPIO_PIN_PULLUP;
-    err_code = nrf_drv_gpiote_in_init(W5500_INT_PIN, &in_config, w5500_int_handler);
-    APP_ERROR_CHECK(err_code);
+	nrf_drv_gpiote_in_init(W5500_INT_PIN, &in_config, w5500_int_handler);
     nrf_drv_gpiote_in_event_enable(W5500_INT_PIN, true);
 
 	spi_init();
@@ -74,4 +67,3 @@ int main(void)
 	}
 
 }
-
