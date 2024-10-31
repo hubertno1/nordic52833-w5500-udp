@@ -781,10 +781,10 @@ void Process_Socket_Data(SOCKET s)
 	//if (size >=8 )
 	//{
 		// 记录接收到的数据长度
-        NRF_LOG_INFO("Received data size: %d", size);
+        // NRF_LOG_INFO("Received data size: %d", size);
 
         // 打印接收到的数据内容
-        NRF_LOG_HEXDUMP_INFO(Rx_Buffer, size);
+        // NRF_LOG_HEXDUMP_INFO(Rx_Buffer, size);
 
 		// 提取目的IP地址和端口号
 		UDP_DIPR[0] = Rx_Buffer[0];
@@ -800,10 +800,10 @@ void Process_Socket_Data(SOCKET s)
 		memcpy(Tx_Buffer, Rx_Buffer+8, size-8);
 
         // 记录将要发送的数据长度
-        NRF_LOG_INFO("Sending data size: %d", size - 8);
+        // NRF_LOG_INFO("Sending data size: %d", size - 8);
 
         // 打印将要发送的数据内容
-        NRF_LOG_HEXDUMP_INFO(Tx_Buffer, size - 8);
+        // NRF_LOG_HEXDUMP_INFO(Tx_Buffer, size - 8);
 
 		// 将处理后的数据写入W5500的socket发送缓冲区			
 		Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);

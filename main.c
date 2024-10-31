@@ -16,6 +16,8 @@
 #include "nrf_delay.h"
 #include "nrf_drv_gpiote.h"
 #include "app_error.h"
+#include "test_spi_speed.h"
+
 
 
 #define TIMING_PIN  NRF_GPIO_PIN_MAP(0,13) 
@@ -77,9 +79,9 @@ int main(void)
 			w5500_int_flag = false;
 			W5500_Interrupt_Process();//W5500中断处理程序框架
 		
-			// 打印中断次数
-            //NRF_LOG_INFO("Interrupt count: %d", w5500_int);
-            //NRF_LOG_FLUSH();
+			//  打印中断次数
+            // NRF_LOG_INFO("Interrupt count: %d", w5500_int);
+            // NRF_LOG_FLUSH();
 			
 			if((S0_Data & S_RECEIVE) == S_RECEIVE)//如果Socket0接收到数据
 			{
@@ -92,7 +94,7 @@ int main(void)
 				NRF_LOG_FLUSH();
 			}
 			
-						// 添加发送完成处理
+			// 添加发送完成处理
 			if((S0_Data & S_TRANSMITOK) == S_TRANSMITOK)
 			{
 				S0_Data &= ~S_TRANSMITOK;
@@ -103,19 +105,7 @@ int main(void)
 		
 		}
 
-/*
-		if((S0_Data & S_RECEIVE) == S_RECEIVE)//如果Socket0接收到数据
-		{
-			S0_Data&=~S_RECEIVE;
-
-			Process_Socket_Data(0);//W5500接收并发送接收到的数据
-			// nrf_gpio_pin_clear(TIMING_PIN);	
-			//nrf_delay_ms(10);
-			
-			NRF_LOG_FLUSH();
-		}
-		*/
-
 	}
 
 }
+
