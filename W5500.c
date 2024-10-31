@@ -8,18 +8,12 @@
 
 #include "W5500.h"	
 #include "nrf_delay.h"
-#include <nrfx_spi.h>
-#include "nrf_drv_spi.h"
-#include <hal/nrf_gpio.h>
+#include "nrf_gpio.h"
 #include "spi_driver.h"
 #include "string.h"
-#include "stdint.h"
-#include "stdlib.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
-
-
 
 
 /***************----- ÍøÂç²ÎÊı±äÁ¿¶¨Òå -----***************/
@@ -54,11 +48,6 @@ unsigned char S0_Data;		//¶Ë¿Ú0½ÓÊÕºÍ·¢ËÍÊı¾İµÄ×´Ì¬,1:¶Ë¿Ú½ÓÊÕµ½Êı¾İ,2:¶Ë¿Ú·¢ËÍÊ
 /***************----- ¶Ë¿ÚÊı¾İ»º³åÇø -----***************/
 unsigned char Rx_Buffer[4096];	//¶Ë¿Ú½ÓÊÕÊı¾İ»º³åÇø 
 unsigned char Tx_Buffer[4096];	//¶Ë¿Ú·¢ËÍÊı¾İ»º³åÇø 
-
-volatile unsigned char W5500_Interrupt;	//W5500ÖĞ¶Ï±êÖ¾(0:ÎŞÖĞ¶Ï,1:ÓĞÖĞ¶Ï)
-
-
-
 
 /*******************************************************************************
 * º¯ÊıÃû  : Write_W5500_1Byte
@@ -394,9 +383,9 @@ void Write_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr, unsigned short siz
 void W5500_Hardware_Reset(void)
 {
 	spi_cs_disable();
-	nrf_gpio_pin_clear(SPI_NODIC_RESET_PIN);//¸´Î»Òı½ÅÀ­µÍ
+	nrf_gpio_pin_clear(W5500_RST_PIN);//¸´Î»Òı½ÅÀ­µÍ
 	nrf_delay_ms(50);
-	nrf_gpio_pin_set(SPI_NODIC_RESET_PIN);//¸´Î»Òı½ÅÀ­¸ß
+	nrf_gpio_pin_set(W5500_RST_PIN);//¸´Î»Òı½ÅÀ­¸ß
 	nrf_delay_ms(500);
 	
 	while((Read_W5500_1Byte(PHYCFGR)&LINK)==0);//µÈ´ıÒÔÌ«ÍøÁ¬½ÓÍê³É
@@ -538,7 +527,7 @@ void Socket_Init(SOCKET s)
 {
 	//ÉèÖÃ·ÖÆ¬³¤¶È£¬²Î¿¼W5500Êı¾İÊÖ²á£¬¸ÃÖµ¿ÉÒÔ²»ĞŞ¸Ä	
 	Write_W5500_SOCK_2Byte(0, Sn_MSSR, 1460);//×î´ó·ÖÆ¬×Ö½ÚÊı=1460(0x5b4)
-	//ÉèÖÃÖ¸¶¨¶Ë¿Ú
+
 	//ÉèÖÃ¶Ë¿Ú0µÄ¶Ë¿ÚºÅ
 	Write_W5500_SOCK_2Byte(s, Sn_PORT, S0_Port[0]*256+S0_Port[1]);		
 			
@@ -778,14 +767,6 @@ void Process_Socket_Data(SOCKET s)
 	// ´Ósocket½ÓÊÕ»º³åÇø¶ÁÈ¡Êı¾İ
 	size=Read_SOCK_Data_Buffer(s, Rx_Buffer);
 
-	//if (size >=8 )
-	//{
-		// ¼ÇÂ¼½ÓÊÕµ½µÄÊı¾İ³¤¶È
-        // NRF_LOG_INFO("Received data size: %d", size);
-
-        // ´òÓ¡½ÓÊÕµ½µÄÊı¾İÄÚÈİ
-        // NRF_LOG_HEXDUMP_INFO(Rx_Buffer, size);
-
 		// ÌáÈ¡Ä¿µÄIPµØÖ·ºÍ¶Ë¿ÚºÅ
 		UDP_DIPR[0] = Rx_Buffer[0];
 		UDP_DIPR[1] = Rx_Buffer[1];
@@ -807,10 +788,5 @@ void Process_Socket_Data(SOCKET s)
 
 		// ½«´¦ÀíºóµÄÊı¾İĞ´ÈëW5500µÄsocket·¢ËÍ»º³åÇø			
 		Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);
-	//}
-	//else
-    //{
-    //    NRF_LOG_INFO("No data received");
-    //}
 
 }

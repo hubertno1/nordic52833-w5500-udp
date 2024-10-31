@@ -242,12 +242,15 @@ extern unsigned char S0_Data;		//端口0接收和发送数据的状态,1:端口接收到数据,2:端
 #define S_RECEIVE		0x01		//端口接收到一个数据包 
 #define S_TRANSMITOK	0x02		//端口发送一个数据包完成 
 
+/***************----- W5500复位引脚 -----***************/
+#define W5500_RST_PIN 5
+
 /***************----- 端口数据缓冲区 -----***************/
 extern unsigned char Rx_Buffer[4096];	//端口接收数据缓冲区 
 extern unsigned char Tx_Buffer[4096];	//端口发送数据缓冲区 
 
-extern volatile unsigned char W5500_Interrupt;	//W5500中断标志(0:无中断,1:有中断)
 typedef unsigned char SOCKET;			//自定义端口号数据类型
+
 
 extern void Delay(unsigned int d);//延时函数(ms)
 extern void SPI_Configuration(void);//W5500 SPI初始化配置(STM32 SPI1)
@@ -266,12 +269,6 @@ void Load_Net_Parameters(void);
 void W5500_Initialization(void);
 void W5500_Socket_Set(void);
 void Process_Socket_Data(SOCKET s);
-
-
-
-
-#define SPI_NODIC_RESET_PIN 5
-
 
 #endif
 
