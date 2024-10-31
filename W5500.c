@@ -14,6 +14,12 @@
 #include "spi_driver.h"
 #include "string.h"
 #include "stdint.h"
+#include "stdlib.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
+
 
 
 /***************----- ÍøÂç²ÎÊı±äÁ¿¶¨Òå -----***************/
@@ -49,7 +55,7 @@ unsigned char S0_Data;		//¶Ë¿Ú0½ÓÊÕºÍ·¢ËÍÊı¾İµÄ×´Ì¬,1:¶Ë¿Ú½ÓÊÕµ½Êı¾İ,2:¶Ë¿Ú·¢ËÍÊ
 unsigned char Rx_Buffer[4096];	//¶Ë¿Ú½ÓÊÕÊı¾İ»º³åÇø 
 unsigned char Tx_Buffer[4096];	//¶Ë¿Ú·¢ËÍÊı¾İ»º³åÇø 
 
-unsigned char W5500_Interrupt;	//W5500ÖĞ¶Ï±êÖ¾(0:ÎŞÖĞ¶Ï,1:ÓĞÖĞ¶Ï)
+volatile unsigned char W5500_Interrupt;	//W5500ÖĞ¶Ï±êÖ¾(0:ÎŞÖĞ¶Ï,1:ÓĞÖĞ¶Ï)
 
 
 
@@ -329,11 +335,11 @@ void Write_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr, unsigned short siz
 	unsigned short i;
 
 	//Èç¹ûÊÇUDPÄ£Ê½,¿ÉÒÔÔÚ´ËÉèÖÃÄ¿µÄÖ÷»úµÄIPºÍ¶Ë¿ÚºÅ
-	if((Read_W5500_SOCK_1Byte(s,Sn_MR)&0x0f) != SOCK_UDP)//Èç¹ûSocket´ò¿ªÊ§°Ü
-	{		
+	//if((Read_W5500_SOCK_1Byte(s,Sn_MR)&0x0f) != SOCK_UDP)//Èç¹ûSocket´ò¿ªÊ§°Ü
+	//{		
 		Write_W5500_SOCK_4Byte(s, Sn_DIPR, UDP_DIPR);//ÉèÖÃÄ¿µÄÖ÷»úIP  		
 		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//ÉèÖÃÄ¿µÄÖ÷»ú¶Ë¿ÚºÅ				
-	}
+	//}
 
 	offset=Read_W5500_SOCK_2Byte(s,Sn_TX_WR);
 	offset1=offset;
@@ -436,14 +442,17 @@ void W5500_Init(void)
 	// }
 
 	/* ³¢ÊÔ·ÖÅä¸ø socket0 ¸ü¶àµÄ»º³åÇø 16KB½ÓÊÕ + 16KB·¢ËÍ */
-	Write_W5500_SOCK_1Byte(0, Sn_RXBUF_SIZE, 0x10);	
-	Write_W5500_SOCK_1Byte(0, Sn_TXBUF_SIZE, 0x10);
+	Write_W5500_SOCK_1Byte(0, Sn_RXBUF_SIZE, 0x08);	
+	Write_W5500_SOCK_1Byte(0, Sn_TXBUF_SIZE, 0x08);
+	Write_W5500_SOCK_1Byte(0, Sn_IMR, IMR_RECV);
+	Write_W5500_1Byte(IMR, IM_IR7);
+	Write_W5500_1Byte(SIMR, 1); 
 	for (i = 1; i < 8; i++)
 	{
 		Write_W5500_SOCK_1Byte(i, Sn_RXBUF_SIZE, 0x00);
 		Write_W5500_SOCK_1Byte(i, Sn_TXBUF_SIZE, 0x00);
 	}
-
+	
 
 
 	//ÉèÖÃÖØÊÔÊ±¼ä£¬Ä¬ÈÏÎª2000(200ms) 
@@ -452,14 +461,14 @@ void W5500_Init(void)
 
 	//ÉèÖÃÖØÊÔ´ÎÊı£¬Ä¬ÈÏÎª8´Î 
 	//Èç¹ûÖØ·¢µÄ´ÎÊı³¬¹ıÉè¶¨Öµ,Ôò²úÉú³¬Ê±ÖĞ¶Ï(Ïà¹ØµÄ¶Ë¿ÚÖĞ¶Ï¼Ä´æÆ÷ÖĞµÄSn_IR ³¬Ê±Î»(TIMEOUT)ÖÃ¡°1¡±)
-	Write_W5500_1Byte(RCR,8);
+	Write_W5500_1Byte(RCR,10);
 
 	//Æô¶¯ÖĞ¶Ï£¬²Î¿¼W5500Êı¾İÊÖ²áÈ·¶¨×Ô¼ºĞèÒªµÄÖĞ¶ÏÀàĞÍ
 	//IMR_CONFLICTÊÇIPµØÖ·³åÍ»Òì³£ÖĞ¶Ï,IMR_UNREACHÊÇUDPÍ¨ĞÅÊ±£¬µØÖ·ÎŞ·¨µ½´ïµÄÒì³£ÖĞ¶Ï
 	//ÆäËüÊÇSocketÊÂ¼şÖĞ¶Ï£¬¸ù¾İĞèÒªÌí¼Ó
-	Write_W5500_1Byte(IMR,IM_IR7 | IM_IR6);
-	Write_W5500_1Byte(SIMR,S0_IMR);
-	Write_W5500_SOCK_1Byte(0, Sn_IMR, IMR_SENDOK | IMR_TIMEOUT | IMR_RECV | IMR_DISCON | IMR_CON);
+//	Write_W5500_1Byte(IMR,IM_IR7);
+//	Write_W5500_1Byte(SIMR,S0_IMR);
+//	Write_W5500_SOCK_1Byte(0, Sn_IMR, IMR_RECV);
 }
 
 /*******************************************************************************
@@ -470,7 +479,7 @@ void W5500_Init(void)
 * ·µ»ØÖµ  : ³É¹¦·µ»ØTRUE(0xFF),Ê§°Ü·µ»ØFALSE(0x00)
 * ËµÃ÷    : ÎŞ
 *******************************************************************************/
-	unsigned short hcg = 0;
+	//unsigned short hcg = 0;
 unsigned char Detect_Gateway(void)
 {
 	unsigned char ip_adde[4];
@@ -479,10 +488,10 @@ unsigned char Detect_Gateway(void)
 	ip_adde[2]=IP_Addr[2]+1;
 	ip_adde[3]=IP_Addr[3]+1;
 
- hcg =  Read_W5500_1Byte(GAR);
-	hcg =  Read_W5500_1Byte(GAR);
-	hcg =  Read_W5500_1Byte(GAR);
-	hcg =  Read_W5500_1Byte(GAR);
+// hcg =  Read_W5500_1Byte(GAR);
+//	hcg =  Read_W5500_1Byte(GAR);
+//	hcg =  Read_W5500_1Byte(GAR);
+//	hcg =  Read_W5500_1Byte(GAR);
 	
 	//¼ì²éÍø¹Ø¼°»ñÈ¡Íø¹ØµÄÎïÀíµØÖ·
 	Write_W5500_SOCK_4Byte(0,Sn_DIPR,ip_adde);//ÏòÄ¿µÄµØÖ·¼Ä´æÆ÷Ğ´ÈëÓë±¾»úIP²»Í¬µÄIPÖµ
@@ -530,38 +539,9 @@ void Socket_Init(SOCKET s)
 	//ÉèÖÃ·ÖÆ¬³¤¶È£¬²Î¿¼W5500Êı¾İÊÖ²á£¬¸ÃÖµ¿ÉÒÔ²»ĞŞ¸Ä	
 	Write_W5500_SOCK_2Byte(0, Sn_MSSR, 1460);//×î´ó·ÖÆ¬×Ö½ÚÊı=1460(0x5b4)
 	//ÉèÖÃÖ¸¶¨¶Ë¿Ú
-	switch(s)
-	{
-		case 0:
-			//ÉèÖÃ¶Ë¿Ú0µÄ¶Ë¿ÚºÅ
-			Write_W5500_SOCK_2Byte(0, Sn_PORT, S0_Port[0]*256+S0_Port[1]);		
+	//ÉèÖÃ¶Ë¿Ú0µÄ¶Ë¿ÚºÅ
+	Write_W5500_SOCK_2Byte(s, Sn_PORT, S0_Port[0]*256+S0_Port[1]);		
 			
-			break;
-
-		case 1:
-			break;
-
-		case 2:
-			break;
-
-		case 3:
-			break;
-
-		case 4:
-			break;
-
-		case 5:
-			break;
-
-		case 6:
-			break;
-
-		case 7:
-			break;
-
-		default:
-			break;
-	}
 }
 
 /*******************************************************************************
@@ -662,35 +642,14 @@ void W5500_Interrupt_Process(void)
 	unsigned char i,j;
 
 IntDispose:
-	W5500_Interrupt=0;//ÇåÁãÖĞ¶Ï±êÖ¾
-	i = Read_W5500_1Byte(W5500IR);//¶ÁÈ¡ÖĞ¶Ï±êÖ¾¼Ä´æÆ÷
-	Write_W5500_1Byte(W5500IR, (i&0xf0));//»ØĞ´Çå³ıÖĞ¶Ï±êÖ¾
 
-	if((i & CONFLICT) == CONFLICT)//IPµØÖ·³åÍ»Òì³£´¦Àí
-	{
-		 //×Ô¼ºÌí¼Ó´úÂë
-	}
-
-	if((i & UNREACH) == UNREACH)//UDPÄ£Ê½ÏÂµØÖ·ÎŞ·¨µ½´ïÒì³£´¦Àí
-	{
-		//×Ô¼ºÌí¼Ó´úÂë
-	}
 
 	i=Read_W5500_1Byte(SIR);//¶ÁÈ¡¶Ë¿ÚÖĞ¶Ï±êÖ¾¼Ä´æÆ÷	
 	if((i & S0_INT) == S0_INT)//Socket0ÊÂ¼ş´¦Àí 
 	{
 		j=Read_W5500_SOCK_1Byte(0,Sn_IR);//¶ÁÈ¡Socket0ÖĞ¶Ï±êÖ¾¼Ä´æÆ÷
 		Write_W5500_SOCK_1Byte(0,Sn_IR,j);
-		if(j&IR_CON)//ÔÚTCPÄ£Ê½ÏÂ,Socket0³É¹¦Á¬½Ó 
-		{
-			S0_State|=S_CONN;//ÍøÂçÁ¬½Ó×´Ì¬0x02,¶Ë¿ÚÍê³ÉÁ¬½Ó£¬¿ÉÒÔÕı³£´«ÊäÊı¾İ
-		}
-		if(j&IR_DISCON)//ÔÚTCPÄ£Ê½ÏÂSocket¶Ï¿ªÁ¬½Ó´¦Àí
-		{
-			Write_W5500_SOCK_1Byte(0,Sn_CR,CLOSE);//¹Ø±Õ¶Ë¿Ú,µÈ´ıÖØĞÂ´ò¿ªÁ¬½Ó 
-			Socket_Init(0);		//Ö¸¶¨Socket(0~7)³õÊ¼»¯,³õÊ¼»¯¶Ë¿Ú0
-			S0_State=0;//ÍøÂçÁ¬½Ó×´Ì¬0x00,¶Ë¿ÚÁ¬½ÓÊ§°Ü
-		}
+
 		if(j&IR_SEND_OK)//Socket0Êı¾İ·¢ËÍÍê³É,¿ÉÒÔÔÙ´ÎÆô¶¯S_tx_process()º¯Êı·¢ËÍÊı¾İ 
 		{
 			S0_Data|=S_TRANSMITOK;//¶Ë¿Ú·¢ËÍÒ»¸öÊı¾İ°üÍê³É 
@@ -819,17 +778,39 @@ void Process_Socket_Data(SOCKET s)
 	// ´Ósocket½ÓÊÕ»º³åÇø¶ÁÈ¡Êı¾İ
 	size=Read_SOCK_Data_Buffer(s, Rx_Buffer);
 
-	// ÌáÈ¡Ä¿µÄIPµØÖ·ºÍ¶Ë¿ÚºÅ
-	UDP_DIPR[0] = Rx_Buffer[0];
-	UDP_DIPR[1] = Rx_Buffer[1];
-	UDP_DIPR[2] = Rx_Buffer[2];
-	UDP_DIPR[3] = Rx_Buffer[3];
+	//if (size >=8 )
+	//{
+		// ¼ÇÂ¼½ÓÊÕµ½µÄÊı¾İ³¤¶È
+        NRF_LOG_INFO("Received data size: %d", size);
 
-	UDP_DPORT[0] = Rx_Buffer[4];
-	UDP_DPORT[1] = Rx_Buffer[5];
+        // ´òÓ¡½ÓÊÕµ½µÄÊı¾İÄÚÈİ
+        NRF_LOG_HEXDUMP_INFO(Rx_Buffer, size);
 
-	// ½«½ÓÊÕµ½µÄÊı¾İ¸´ÖÆµ½·¢ËÍ»º³åÇø
-	memcpy(Tx_Buffer, Rx_Buffer+8, size-8);
-	// ½«´¦ÀíºóµÄÊı¾İĞ´ÈëW5500µÄsocket·¢ËÍ»º³åÇø			
-	Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);
+		// ÌáÈ¡Ä¿µÄIPµØÖ·ºÍ¶Ë¿ÚºÅ
+		UDP_DIPR[0] = Rx_Buffer[0];
+		UDP_DIPR[1] = Rx_Buffer[1];
+		UDP_DIPR[2] = Rx_Buffer[2];
+		UDP_DIPR[3] = Rx_Buffer[3];
+
+		UDP_DPORT[0] = Rx_Buffer[4];
+		UDP_DPORT[1] = Rx_Buffer[5];
+	
+
+		// ½«½ÓÊÕµ½µÄÊı¾İ¸´ÖÆµ½·¢ËÍ»º³åÇø
+		memcpy(Tx_Buffer, Rx_Buffer+8, size-8);
+
+        // ¼ÇÂ¼½«Òª·¢ËÍµÄÊı¾İ³¤¶È
+        NRF_LOG_INFO("Sending data size: %d", size - 8);
+
+        // ´òÓ¡½«Òª·¢ËÍµÄÊı¾İÄÚÈİ
+        NRF_LOG_HEXDUMP_INFO(Tx_Buffer, size - 8);
+
+		// ½«´¦ÀíºóµÄÊı¾İĞ´ÈëW5500µÄsocket·¢ËÍ»º³åÇø			
+		Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);
+	//}
+	//else
+    //{
+    //    NRF_LOG_INFO("No data received");
+    //}
+
 }

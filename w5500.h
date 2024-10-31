@@ -246,7 +246,7 @@ extern unsigned char S0_Data;		//端口0接收和发送数据的状态,1:端口接收到数据,2:端
 extern unsigned char Rx_Buffer[4096];	//端口接收数据缓冲区 
 extern unsigned char Tx_Buffer[4096];	//端口发送数据缓冲区 
 
-extern unsigned char W5500_Interrupt;	//W5500中断标志(0:无中断,1:有中断)
+extern volatile unsigned char W5500_Interrupt;	//W5500中断标志(0:无中断,1:有中断)
 typedef unsigned char SOCKET;			//自定义端口号数据类型
 
 extern void Delay(unsigned int d);//延时函数(ms)
