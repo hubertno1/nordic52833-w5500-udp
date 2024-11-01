@@ -58,11 +58,6 @@ int main(void)
 				Process_Socket_Data(0);//W5500接收并发送接收到的数据
 			}
 			
-			// 添加发送完成处理
-			if((S0_Data & S_TRANSMITOK) == S_TRANSMITOK)
-			{
-				S0_Data &= ~S_TRANSMITOK;
-			}
 		
 		}
 

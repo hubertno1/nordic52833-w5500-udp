@@ -399,7 +399,6 @@ void W5500_Hardware_Reset(void)
 *******************************************************************************/
 void W5500_Init(void)
 {
-	unsigned char i=0;
 
 	Write_W5500_1Byte(MR, RST);//软件复位W5500,置1有效,复位后自动清0
 	nrf_delay_ms(10);//延时10ms,自己定义该函数
@@ -422,24 +421,14 @@ void W5500_Init(void)
 	Write_W5500_nByte(SIPR,IP_Addr,4);		
 	
 	//设置发送缓冲区和接收缓冲区的大小，参考W5500数据手册
-	// for(i=0;i<8;i++)
-	// {
-	// 	Write_W5500_SOCK_1Byte(i,Sn_RXBUF_SIZE, 0x02);//Socket Rx memory size=2k
-	// 	Write_W5500_SOCK_1Byte(i,Sn_TXBUF_SIZE, 0x02);//Socket Tx mempry size=2k
-	// }
 
 	/* 尝试分配给 socket0 更多的缓冲区 16KB接收 + 16KB发送 */
 	Write_W5500_SOCK_1Byte(0, Sn_RXBUF_SIZE, 0x08);	
 	Write_W5500_SOCK_1Byte(0, Sn_TXBUF_SIZE, 0x08);
+	/* socket 相关中断 */
 	Write_W5500_SOCK_1Byte(0, Sn_IMR, IMR_RECV);
 	Write_W5500_1Byte(IMR, IM_IR7);
-	Write_W5500_1Byte(SIMR, 1); 
-	for (i = 1; i < 8; i++)
-	{
-		Write_W5500_SOCK_1Byte(i, Sn_RXBUF_SIZE, 0x00);
-		Write_W5500_SOCK_1Byte(i, Sn_TXBUF_SIZE, 0x00);
-	}
-	
+	Write_W5500_1Byte(SIMR, S0_IMR); 
 
 
 	//设置重试时间，默认为2000(200ms) 
@@ -450,12 +439,6 @@ void W5500_Init(void)
 	//如果重发的次数超过设定值,则产生超时中断(相关的端口中断寄存器中的Sn_IR 超时位(TIMEOUT)置“1”)
 	Write_W5500_1Byte(RCR,10);
 
-	//启动中断，参考W5500数据手册确定自己需要的中断类型
-	//IMR_CONFLICT是IP地址冲突异常中断,IMR_UNREACH是UDP通信时，地址无法到达的异常中断
-	//其它是Socket事件中断，根据需要添加
-//	Write_W5500_1Byte(IMR,IM_IR7);
-//	Write_W5500_1Byte(SIMR,S0_IMR);
-//	Write_W5500_SOCK_1Byte(0, Sn_IMR, IMR_RECV);
 }
 
 /*******************************************************************************
@@ -621,34 +604,42 @@ unsigned char Socket_UDP(SOCKET s)
 *******************************************************************************/
 void W5500_Interrupt_Process(void)
 {
-	unsigned char i,j;
-
-IntDispose:
-
-
-	i=Read_W5500_1Byte(SIR);//读取端口中断标志寄存器	
-	if((i & S0_INT) == S0_INT)//Socket0事件处理 
-	{
-		j=Read_W5500_SOCK_1Byte(0,Sn_IR);//读取Socket0中断标志寄存器
-		Write_W5500_SOCK_1Byte(0,Sn_IR,j);
-
-		if(j&IR_SEND_OK)//Socket0数据发送完成,可以再次启动S_tx_process()函数发送数据 
+	/* sir对应着SIR，是总的Socket中断寄存器，每一位对应着一个socket的中断状态*/
+	/* ir对应着Sn_IR，是具体某一个socket的中断类型寄存器，每一位对应着每一种中断类型*/
+	/* 注意：我们在前面配置了Sn_IR，只让部分中断生效；也就是说，被屏蔽的中断会被记录 */
+	/* 但是不会通知INT引脚产生中断 */
+	uint8_t sir, ir;
+	
+	do {
+		// 处理所有pending的中断
+		sir = Read_W5500_1Byte(SIR);
+		
+		// 遍历所有Socket
+		for(int i = 0; i < 8; i++) 
 		{
-			S0_Data|=S_TRANSMITOK;//端口发送一个数据包完成 
+			if(sir & (1 << i)) 
+			{
+				// 读取和清除该Socket的中断
+				ir = Read_W5500_SOCK_1Byte(i, Sn_IR);
+				Write_W5500_SOCK_1Byte(i, Sn_IR, ir);
+				
+				// 处理Socket0的特定功能
+				if(i == 0) 
+				{
+					if(ir & IR_RECV) 
+					{
+						S0_Data |= S_RECEIVE;
+					}
+					if(ir & IR_TIMEOUT) 
+					{
+						Write_W5500_SOCK_1Byte(0, Sn_CR, CLOSE);
+						S0_State = 0;
+					}
+				}
+			}
 		}
-		if(j&IR_RECV)//Socket接收到数据,可以启动S_rx_process()函数 
-		{
-			S0_Data|=S_RECEIVE;//端口接收到一个数据包
-		}
-		if(j&IR_TIMEOUT)//Socket连接或数据传输超时处理 
-		{
-			Write_W5500_SOCK_1Byte(0,Sn_CR,CLOSE);// 关闭端口,等待重新打开连接 
-			S0_State=0;//网络连接状态0x00,端口连接失败
-		}
-	}
-
-	if(Read_W5500_1Byte(SIR) != 0) 
-		goto IntDispose;
+	} while(Read_W5500_1Byte(SIR) != 0);  // 确认是否还有未处理的中断
+	
 }
 
 /*******************************************************************************
@@ -662,7 +653,7 @@ IntDispose:
 void W5500_Initialization(void)
 {
 	W5500_Init();		//初始化W5500寄存器函数
-	Detect_Gateway();	//检查网关服务器 
+	// Detect_Gateway();	//检查网关服务器 
 	Socket_Init(0);		//指定Socket(0~7)初始化,初始化端口0
 }
 
@@ -676,10 +667,10 @@ void W5500_Initialization(void)
 *******************************************************************************/
 void Load_Net_Parameters(void)
 {
-	Gateway_IP[0] = 192;//加载网关参数
-	Gateway_IP[1] = 168;
-	Gateway_IP[2] = 1;
-	Gateway_IP[3] = 100;
+	Gateway_IP[0] = 0;//加载网关参数
+	Gateway_IP[1] = 0;
+	Gateway_IP[2] = 0;
+	Gateway_IP[3] = 0;
 
 	Sub_Mask[0]=255;//加载子网掩码
 	Sub_Mask[1]=255;
@@ -720,27 +711,10 @@ void W5500_Socket_Set(void)
 {
 	if(S0_State==0)//端口0初始化配置
 	{
-		if(S0_Mode==TCP_SERVER)//TCP服务器模式 
-		{
-			if(Socket_Listen(0)==TRUE)
-				S0_State=S_INIT;
-			else
-				S0_State=0;
-		}
-		else if(S0_Mode==TCP_CLIENT)//TCP客户端模式 
-		{
-			if(Socket_Connect(0)==TRUE)
-				S0_State=S_INIT;
-			else
-				S0_State=0;
-		}
-		else//UDP模式 
-		{
-			if(Socket_UDP(0)==TRUE)
-				S0_State=S_INIT|S_CONN;
-			else
-				S0_State=0;
-		}
+		if(Socket_UDP(0)==TRUE)
+			S0_State=S_INIT;
+		else
+			S0_State=0;
 	}
 }
 /*******************************************************************************
