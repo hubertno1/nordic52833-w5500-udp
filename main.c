@@ -30,9 +30,9 @@ int main(void)
 
 	nrf_drv_gpiote_init();			
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);		// 配置dk与w5500连接的中断引脚为下降沿触发
-    in_config.pull = NRF_GPIO_PIN_PULLUP;	// 配置上拉电阻，防止中断引脚悬空导致不稳定而导致误触发中断或不触发中断
-	nrf_drv_gpiote_in_init(W5500_INT_PIN, &in_config, w5500_itr_handler);		// 初始化中断引脚, 将中断引脚1. 设置为下降沿触发，2. 设置上拉电阻，3. 设置中断处理函数 4. 设置这个配置的对应的中断引脚
-    nrf_drv_gpiote_in_event_enable(W5500_INT_PIN, true);	// 使能中断引脚的中断功能，如果不使能，即使中断引脚触发了中断，也不会触发中断处理函数
+    in_config.pull = NRF_GPIO_PIN_PULLUP;											// 配置上拉电阻，防止中断引脚悬空导致不稳定而导致误触发中断或不触发中断
+	nrf_drv_gpiote_in_init(W5500_INT_PIN, &in_config, w5500_itr_handler);			// 初始化中断引脚, 将中断引脚1. 设置为下降沿触发，2. 设置上拉电阻，3. 设置中断处理函数 4. 设置这个配置的对应的中断引脚
+    nrf_drv_gpiote_in_event_enable(W5500_INT_PIN, true);							// 使能中断引脚的中断功能，如果不使能，即使中断引脚触发了中断，也不会触发中断处理函数
 
 	spi_init();
 

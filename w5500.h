@@ -227,10 +227,8 @@ typedef unsigned char SOCKET;			//自定义端口号数据类型
 
 extern void W5500_Hardware_Reset(void);//硬件复位W5500
 extern void W5500_Init(void);//初始化W5500寄存器函数
-extern unsigned char Detect_Gateway(void);//检查网关服务器
+
 extern void Socket_Init(SOCKET s);//指定Socket(0~7)初始化
-extern unsigned char Socket_Connect(SOCKET s);//设置指定Socket(0~7)为客户端与远程服务器连接
-extern unsigned char Socket_Listen(SOCKET s);//设置指定Socket(0~7)作为服务器等待远程主机的连接
 extern unsigned char Socket_UDP(SOCKET s);//设置指定Socket(0~7)为UDP模式
 extern unsigned short Read_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr);//指定Socket(0~7)接收数据处理
 extern void Write_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr, unsigned short size); //指定Socket(0~7)发送数据处理
