@@ -636,20 +636,25 @@ void Process_Socket_Data(SOCKET s)
 	// 从socket接收缓冲区读取数据
 	size=Read_SOCK_Data_Buffer(s, Rx_Buffer);
 
-		// 提取目的IP地址和端口号
-		UDP_DIPR[0] = Rx_Buffer[0];
-		UDP_DIPR[1] = Rx_Buffer[1];
-		UDP_DIPR[2] = Rx_Buffer[2];
-		UDP_DIPR[3] = Rx_Buffer[3];
+	if (size < 8)
+	{
+		return;
+	}
+	
+	// 提取目的IP地址和端口号
+	UDP_DIPR[0] = Rx_Buffer[0];
+	UDP_DIPR[1] = Rx_Buffer[1];
+	UDP_DIPR[2] = Rx_Buffer[2];
+	UDP_DIPR[3] = Rx_Buffer[3];
 
-		UDP_DPORT[0] = Rx_Buffer[4];
-		UDP_DPORT[1] = Rx_Buffer[5];
+	UDP_DPORT[0] = Rx_Buffer[4];
+	UDP_DPORT[1] = Rx_Buffer[5];
 	
 
-		// 将接收到的数据复制到发送缓冲区
-		memcpy(Tx_Buffer, Rx_Buffer+8, size-8);
+	// 将接收到的数据复制到发送缓冲区
+	memcpy(Tx_Buffer, Rx_Buffer+8, size-8);
 
-		// 将处理后的数据写入W5500的socket发送缓冲区			
-		Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);
+	// 将处理后的数据写入W5500的socket发送缓冲区			
+	Write_SOCK_Data_Buffer(s, Tx_Buffer, size-8);
 
 }
