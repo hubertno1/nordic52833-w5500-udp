@@ -61,6 +61,9 @@ int main(void)
 		
 		}
 
+		// check_w5500_config();
+		
+
 	}
 
 }

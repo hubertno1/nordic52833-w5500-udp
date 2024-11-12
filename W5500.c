@@ -16,6 +16,14 @@
 #include "nrf_log_default_backends.h"
 
 
+/* ¼ì²éw5500ÅäÖÃ×´Ì¬¼Ä´æÆ÷ */
+uint8_t check_w5500_mac[6];
+uint8_t check_w5500_ip[4];
+uint8_t check_w5500_gateway[4];
+uint8_t check_w5500_subnet[4];
+uint8_t check_w5500_phy;
+
+
 /***************----- ÍøÂç²ÎÊı±äÁ¿¶¨Òå -----***************/
 unsigned char Gateway_IP[4];//Íø¹ØIPµØÖ· 
 unsigned char Sub_Mask[4];	//×ÓÍøÑÚÂë 
@@ -44,8 +52,8 @@ unsigned char S0_Data;		//¶Ë¿Ú0½ÓÊÕºÍ·¢ËÍÊı¾İµÄ×´Ì¬,1:¶Ë¿Ú½ÓÊÕµ½Êı¾İ,2:¶Ë¿Ú·¢ËÍÊ
 #define S_TRANSMITOK 0x02	//¶Ë¿Ú·¢ËÍÒ»¸öÊı¾İ°üÍê³É 
 
 /***************----- ¶Ë¿ÚÊı¾İ»º³åÇø -----***************/
-unsigned char Rx_Buffer[4096];	//¶Ë¿Ú½ÓÊÕÊı¾İ»º³åÇø 
-unsigned char Tx_Buffer[4096];	//¶Ë¿Ú·¢ËÍÊı¾İ»º³åÇø 
+unsigned char Rx_Buffer[80];	//¶Ë¿Ú½ÓÊÕÊı¾İ»º³åÇø 
+unsigned char Tx_Buffer[80];	//¶Ë¿Ú·¢ËÍÊı¾İ»º³åÇø 
 
 /*******************************************************************************
 * º¯ÊıÃû  : Write_W5500_1Byte
@@ -192,6 +200,32 @@ unsigned char Read_W5500_1Byte(unsigned short reg)
 
 	spi_cs_disable();//ÖÃW5500µÄSCSÎª¸ßµçÆ½
 	return i;//·µ»Ø¶ÁÈ¡µ½µÄ¼Ä´æÆ÷Êı¾İ
+}
+
+/*******************************************************************************
+* º¯ÊıÃû  : Read_W5500_nByte
+* ÃèÊö    : ¶Á W5500 Ö¸¶¨µØÖ·¼Ä´æÆ÷µÄ n ¸ö×Ö½ÚÊı¾İ
+* ÊäÈë    : reg:16 Î»¼Ä´æÆ÷µØÖ·
+*           dat_ptr: Êı¾İ±£´æ»º³åÇøÖ¸Õë
+*           size: Òª¶ÁÈ¡µÄ×Ö½ÚÊı
+* Êä³ö    : ÎŞ
+* ·µ»ØÖµ  : ÎŞ
+* ËµÃ÷    : ÎŞ
+*******************************************************************************/
+static void read_w5500_nbyte(uint16_t reg, uint8_t *dat_ptr, uint16_t size)
+{
+	uint16_t i;
+
+	spi_cs_enable();
+
+	spi_write_short(reg);
+	spi_write_byte(VDM|RWB_READ|COMMON_R);
+	for (i = 0; i < size; i++)
+	{
+		spi_read_byte(dat_ptr++);
+	}
+	spi_cs_disable();
+
 }
 
 /*******************************************************************************
@@ -432,9 +466,9 @@ void W5500_Init(void)
 	
 	//ÉèÖÃ·¢ËÍ»º³åÇøºÍ½ÓÊÕ»º³åÇøµÄ´óĞ¡£¬²Î¿¼W5500Êı¾İÊÖ²á
 
-	/* ³¢ÊÔ·ÖÅä¸ø socket0 ¸ü¶àµÄ»º³åÇø 16KB½ÓÊÕ + 16KB·¢ËÍ */
-	Write_W5500_SOCK_1Byte(0, Sn_RXBUF_SIZE, 0x08);	
-	Write_W5500_SOCK_1Byte(0, Sn_TXBUF_SIZE, 0x08);
+	/* ³¢ÊÔ·ÖÅä¸ø socket0 ¸ü¶àµÄ»º³åÇø 2KB½ÓÊÕ + 2KB·¢ËÍ */
+	Write_W5500_SOCK_1Byte(0, Sn_RXBUF_SIZE, 0x02);	
+	Write_W5500_SOCK_1Byte(0, Sn_TXBUF_SIZE, 0x02);
 	/* socket Ïà¹ØÖĞ¶Ï */
 	Write_W5500_SOCK_1Byte(0, Sn_IMR, IMR_RECV);
 	Write_W5500_1Byte(IMR, IM_IR7);
@@ -449,6 +483,18 @@ void W5500_Init(void)
 	//Èç¹ûÖØ·¢µÄ´ÎÊı³¬¹ıÉè¶¨Öµ,Ôò²úÉú³¬Ê±ÖĞ¶Ï(Ïà¹ØµÄ¶Ë¿ÚÖĞ¶Ï¼Ä´æÆ÷ÖĞµÄSn_IR ³¬Ê±Î»(TIMEOUT)ÖÃ¡°1¡±)
 	Write_W5500_1Byte(RCR,10);
 
+}
+
+/* ¼ì²éw5500ÅäÖÃ */
+void check_w5500_config(void)
+{
+	// ¶ÁÈ¡macµØÖ·ºÍipµØÖ·
+	read_w5500_nbyte(SHAR, check_w5500_mac, 6);
+	read_w5500_nbyte(SIPR, check_w5500_ip, 4);
+	read_w5500_nbyte(GAR, check_w5500_gateway, 4);
+	read_w5500_nbyte(SUBR, check_w5500_subnet, 4);
+	check_w5500_phy = Read_W5500_1Byte(PHYCFGR);
+	
 }
 
 

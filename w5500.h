@@ -200,8 +200,8 @@
 #define TRUE	0xff
 #define FALSE	0x00
 
-#define S_RX_SIZE	8192	/*定义Socket接收缓冲区的大小，可以根据W5500_RMSR的设置修改 */
-#define S_TX_SIZE	8192  	/*定义Socket发送缓冲区的大小，可以根据W5500_TMSR的设置修改 */
+#define S_RX_SIZE	2048	/*定义Socket接收缓冲区的大小，可以根据W5500_RMSR的设置修改 */
+#define S_TX_SIZE	2048  	/*定义Socket发送缓冲区的大小，可以根据W5500_TMSR的设置修改 */
 
 
 /***************----- 端口的运行模式 -----***************/
@@ -238,6 +238,8 @@ void Load_Net_Parameters(void);
 void W5500_Initialization(void);
 void W5500_Socket_Set(void);
 void Process_Socket_Data(SOCKET s);
+
+void check_w5500_config(void);
 
 #endif
 
