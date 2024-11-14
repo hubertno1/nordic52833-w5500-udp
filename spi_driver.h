@@ -11,6 +11,9 @@ typedef enum {
     SPI_ERROR_NULL      = 0x02,
     SPI_ERROR_MEMORY    = 0x03,
     SPI_ERROR_TRANSFER  = 0x04,
+    SPI_ERROR_PPI_ENABLE= 0x05,
+    SPI_ERROR_PPI_ALLOC = 0x06,
+    SPI_ERROR_PPI_ASSIGN= 0x07,
 } spi_err_code_t;
 
 

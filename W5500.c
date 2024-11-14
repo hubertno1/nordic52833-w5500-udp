@@ -424,6 +424,9 @@ void Write_SOCK_Data_Buffer(SOCKET s, unsigned char *dat_ptr, unsigned short siz
 *******************************************************************************/
 void W5500_Hardware_Reset(void)
 {
+	nrf_gpio_cfg_output(W5500_RST_PIN);//配置W5500复位引脚为输出
+	nrf_gpio_pin_set(W5500_RST_PIN);
+	
 	spi_cs_disable();
 	nrf_gpio_pin_clear(W5500_RST_PIN);//复位引脚拉低
 	nrf_delay_ms(50);

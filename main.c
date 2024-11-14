@@ -10,7 +10,15 @@
 #include "w5500_config.h"
 #include "w5500.h"
 
-#define W5500_INT_PIN  NRF_GPIO_PIN_MAP(0,14)			// 配置w5500的中断引脚在 nrf52833 dk 的p0.14上 
+#define W5500_INT_PIN  NRF_GPIO_PIN_MAP(0,2)			// 配置w5500的中断引脚在 nrf52833 dk 的p0.14上 
+
+
+void time_pin_init(void)
+{
+    // 配置TIME_PIN为输出引脚
+    nrf_gpio_cfg_output(TIME_PIN);
+}
+
 
 // w5500中断标志位。如果w5500中断触发，该标志位会被置为true，主循环一旦检测到该标志位为true，就会立刻复位这个中断标志位。并处理w5500的中断事件
 // 这个中断标志位必须为volatile，否则由于编译器的优化行为，其可能会认为此变量的值一直是false, 从而会影响主循环对w5500中断的处理
@@ -34,6 +42,8 @@ int main(void)
 	nrf_drv_gpiote_in_init(W5500_INT_PIN, &in_config, w5500_itr_handler);			// 初始化中断引脚, 将中断引脚1. 设置为下降沿触发，2. 设置上拉电阻，3. 设置中断处理函数 4. 设置这个配置的对应的中断引脚
     nrf_drv_gpiote_in_event_enable(W5500_INT_PIN, true);							// 使能中断引脚的中断功能，如果不使能，即使中断引脚触发了中断，也不会触发中断处理函数
 
+
+	time_pin_init();
 	spi_init();
 
 	W5500_Hardware_Reset();		//硬件复位W5500

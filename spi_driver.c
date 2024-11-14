@@ -10,27 +10,43 @@
 #include <string.h>
 #include "sdk_config.h"
 #include <stddef.h>
+#include <nrf_delay.h>
+#include <nrfx_ppi.h>
+#include <nrf_gpio.h>
 
+// 定义时间引脚 (TIME_PIN) 为输出引脚
+#define TIME_PIN  NRF_GPIO_PIN_MAP(0,17)  // 假设在P0.17上
 
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  
 static volatile bool spi_xfer_done;  
-
+// static uint32_t ppi_channel;
 
 static spi_err_code_t spi_transfer_base(const uint8_t *tx_data, 
                                         uint8_t *rx_data, 
                                         uint16_t length, 
                                         bool need_rx)
 {
+    
+    //nrf_gpio_pin_clear(TIME_PIN);
+    //nrf_delay_ms(1);
     SPI_TRANSFER_PREPARE();
+    //nrf_delay_ms(1);  
+    //nrf_gpio_pin_set(TIME_PIN);
 
+		
     ret_code_t err_code = nrf_drv_spi_transfer(&spi, 
                                                 tx_data, 
                                                 length,
                                                 need_rx ? rx_data : NULL,
                                                 need_rx ? length : 0);
     SPI_CHECK_TRANSFER(err_code);
-
+    nrf_gpio_pin_clear(TIME_PIN);
     SPI_WAIT_DONE();
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     __NOP();
+    // }
+	nrf_gpio_pin_set(TIME_PIN);
     return SPI_SUCCESS;
 }
 
@@ -49,7 +65,6 @@ spi_err_code_t spi_cs_disable(void)
 static void spi_event_handler(nrf_drv_spi_evt_t const * p_event, void * p_context)
 {
     spi_xfer_done = true;
-    // NRF_LOG_INFO("SPI transfer completed.\r\n");
 }
 
 /**
@@ -75,6 +90,19 @@ spi_err_code_t spi_init(void)
     
     nrf_gpio_cfg_output(SPI_SS_PIN);                /* 手动控制片选引脚 */
     spi_cs_disable();                               /* 初始禁用片选 */
+    
+    //nrfx_ppi_channel_alloc(&ppi_channel);           /* 分配一个 PPI 通道 */
+    
+        // 获取任务地址
+    //uint32_t spi_start_task_addr = nrfx_ppi_task_addr_get(NRF_DRV_SPI_EVENT_START);
+    // 获取事件地址
+    //uint32_t spi_done_event_addr = nrfx_ppi_event_addr_get(NRF_DRV_SPI_EVENT_DONE);
+
+    // 将 SPI 任务和事件连接：SPI 事件完成后自动触发下一个 SPI 任务
+    //nrfx_ppi_channel_assign(ppi_channel,
+                            //spi_start_task_addr,   // 获取 SPI 任务的地址
+                            //spi_done_event_addr);  // 获取 SPI 事件的地址
+    
     return SPI_SUCCESS;
 }
 
