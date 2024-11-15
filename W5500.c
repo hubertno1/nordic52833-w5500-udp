@@ -268,6 +268,7 @@ unsigned short Read_W5500_SOCK_2Byte(SOCKET s, unsigned short reg)
 	spi_write_short(reg);//通过SPI1写16位寄存器地址
 	spi_write_byte(FDM2|RWB_READ|(s*0x20+0x08));//通过SPI1写控制字节,2个字节数据长度,读数据,选择端口s的寄存器
 	spi_read_short(&value);
+	// spi_write_read(
 	
 	spi_cs_disable();//置W5500的SCS为高电平
 

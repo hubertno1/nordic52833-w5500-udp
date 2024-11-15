@@ -15,13 +15,16 @@ void test_spi_speed(void)
 
     while(1)
     {
-        nrf_gpio_pin_set(TEST_PIN);
+        //nrf_gpio_pin_set(TEST_PIN);
 
         spi_cs_enable();
         spi_write_byte(0x55);
+        spi_write_short(0xAAAA);
+//		        spi_write_byte(0xFF);
+//        spi_write_short(0xFFFF);
         spi_cs_disable();
 
-        nrf_gpio_pin_clear(TEST_PIN);	
+        //nrf_gpio_pin_clear(TEST_PIN);	
     }
 	
 }

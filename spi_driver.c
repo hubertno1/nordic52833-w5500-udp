@@ -12,6 +12,9 @@
 #include <stddef.h>
 
 
+// 1. 首先在头文件或配置文件中定义计时引脚
+#define SPI_TIMING_PIN   5  // 选择一个未使用的GPIO引脚
+
 static const nrf_drv_spi_t spi = NRF_DRV_SPI_INSTANCE(SPI_INSTANCE);  
 static volatile bool spi_xfer_done;  
 
@@ -23,14 +26,25 @@ static spi_err_code_t spi_transfer_base(const uint8_t *tx_data,
 {
     SPI_TRANSFER_PREPARE();
 
+	// 传输开始，设置计时引脚为高
+    nrf_gpio_pin_set(SPI_TIMING_PIN);
+	
     ret_code_t err_code = nrf_drv_spi_transfer(&spi, 
                                                 tx_data, 
                                                 length,
                                                 need_rx ? rx_data : NULL,
                                                 need_rx ? length : 0);
-    SPI_CHECK_TRANSFER(err_code);
+    
+	// 传输结束，设置计时引脚为低
+    nrf_gpio_pin_clear(SPI_TIMING_PIN);
+	SPI_CHECK_TRANSFER(err_code);
 
     SPI_WAIT_DONE();
+//    for (int i = 0; i < 100; i++)
+//    {
+//        __NOP();
+//    }
+
     return SPI_SUCCESS;
 }
 
@@ -65,7 +79,7 @@ spi_err_code_t spi_init(void)
     spi_config.mosi_pin = SPI_MOSI_PIN;
     spi_config.sck_pin  = SPI_SCK_PIN;
     spi_config.mode = NRF_DRV_SPI_MODE_0;                             /* 配置 spi 模式为 0 */
-    spi_config.frequency = NRF_DRV_SPI_FREQ_8M;                       /* 1M，后面可以测试 8M 的速率是否可行 */
+    spi_config.frequency = NRF_DRV_SPI_FREQ_2M;                       /* 1M，后面可以测试 8M 的速率是否可行 */
 
     ret_code_t err_code = nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL);
     if (err_code != NRF_SUCCESS)
@@ -75,6 +89,10 @@ spi_err_code_t spi_init(void)
     
     nrf_gpio_cfg_output(SPI_SS_PIN);                /* 手动控制片选引脚 */
     spi_cs_disable();                               /* 初始禁用片选 */
+	    // 添加计时引脚初始化
+    nrf_gpio_cfg_output(SPI_TIMING_PIN);
+    nrf_gpio_pin_clear(SPI_TIMING_PIN);  // 默认低电平
+	
     return SPI_SUCCESS;
 }
 
